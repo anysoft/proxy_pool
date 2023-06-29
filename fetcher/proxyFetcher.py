@@ -151,7 +151,6 @@ class ProxyFetcher(object):
             else:
                 break
 
-
     @staticmethod
     def freeProxy09(page_count=1):
         """ 免费代理库 """
@@ -163,7 +162,6 @@ class ProxyFetcher(object):
                     continue
                 yield ":".join(tr.xpath("./td/text()")[0:2]).strip()
 
-
     @staticmethod
     def freeProxy10():
         """ 89免费代理 """
@@ -174,7 +172,6 @@ class ProxyFetcher(object):
         for proxy in proxies:
             yield ':'.join(proxy)
 
-
     @staticmethod
     def freeProxy11():
         """ 稻壳代理 https://www.docip.net/ """
@@ -184,7 +181,6 @@ class ProxyFetcher(object):
                 yield each['ip']
         except Exception as e:
             print(e)
-
 
     # @staticmethod
     # def wallProxy01():
@@ -266,7 +262,6 @@ class ProxyFetcher(object):
             for proxy in proxies:
                 yield proxy
 
-
     @staticmethod
     def freeproxylistnet():
         """ freeproxylistnet """
@@ -287,7 +282,6 @@ class ProxyFetcher(object):
                 port = "".join(tr.xpath('./td[2]/text()')).strip()
                 yield "%s:%s" % (ip, port)
 
-
     @staticmethod
     def fatezero():
         """ fatezero """
@@ -303,7 +297,6 @@ class ProxyFetcher(object):
                 port = info.get('port')
                 yield "%s:%s" % (ip, port)
 
-
     @staticmethod
     def geonode():
         """ geonode """
@@ -316,7 +309,6 @@ class ProxyFetcher(object):
                 ip = info.get('ip')
                 port = info.get('port')
                 yield "%s:%s" % (ip, port)
-
 
     @staticmethod
     def freeproxylistnet():
@@ -343,7 +335,7 @@ class ProxyFetcher(object):
         """ 小舒代理 https://www.xsdaili.cn/ """
         url = 'https://www.xsdaili.cn/'
         text = WebRequest().get(url).response.text
-#<a href="/dayProxy/ip/2242.html">阅读全文</a>
+        # <a href="/dayProxy/ip/2242.html">阅读全文</a>
         links = re.findall(r'<a\s+href="([^"]+)">阅读全文</a>', text)
         for index in range(3):
             link = url + links[index]
@@ -352,12 +344,23 @@ class ProxyFetcher(object):
             for proxy in proxies:
                 yield proxy
 
+    @staticmethod
+    def scrapecenter():
+        """ 小舒代理 https://www.xsdaili.cn/ """
+        url = 'https://proxypool.scrape.center/all'
+        text = WebRequest().get(url).response.text
+        proxies = text.split(' ')
+        for proxy in proxies:
+            if not proxy or not proxy.__contains__(':'):
+                continue
+            yield proxy
 
 
 if __name__ == '__main__':
     p = ProxyFetcher()
     # for _ in p.freeProxy06():
     # for _ in p.xsdaili():
+    # for _ in p.scrapecenter():
     for _ in p.freeproxylistnet():
         print(_)
 
