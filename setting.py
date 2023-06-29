@@ -59,7 +59,8 @@ PROXY_FETCHER = [
     "freeproxylistnet",
     "proxyDBNet",
     "fatezero",
-    "xsdaili"
+    "xsdaili",
+    "scrapecenter"
 ]
 
 # ############# proxy validator #################
