@@ -83,4 +83,11 @@ def httpsTimeOutValidator(proxy):
 @ProxyValidator.addHttpValidator
 def customValidatorExample(proxy):
     """自定义validator函数，校验代理是否可用, 返回True/False"""
-    return True
+    # return True
+    # 使用cloudflare 作为认证，确保server 正常(部分代理地址已经变成了web站导致单纯head status验证不足)
+    proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
+    try:
+        r = head('https://1.1.1.1', headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
+        return True if r.status_code == 200 and r.headers.get('server') == 'cloudflare' else False
+    except Exception as e:
+        return False
