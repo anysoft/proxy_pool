@@ -233,10 +233,48 @@ class ProxyFetcher(object):
     #         for proxy in proxies:
     #             yield ':'.join(proxy)
 
+    @staticmethod
+    def proxyDBNet():
+        urls = [
+            'http://proxydb.net/?protocol=https&anonlvl=4&min_uptime=75&max_response_time=5&country=CN',
+            'http://proxydb.net/?protocol=https&anonlvl=4&min_uptime=75&max_response_time=5&country=',
+            'http://proxydb.net/?protocol=https&anonlvl=4&min_uptime=75&max_response_time=5&country=SG',
+            'http://proxydb.net/?protocol=https&anonlvl=4&min_uptime=75&max_response_time=5&country=US',
+            'http://proxydb.net/?protocol=https&anonlvl=4&min_uptime=75&max_response_time=5&country=CZ',
+            'http://proxydb.net/?protocol=https&anonlvl=4&min_uptime=75&max_response_time=5&country=AR',
+        ]
+        request = WebRequest()
+
+        for url in urls:
+            r = request.get(url, timeout=20)
+            proxies = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)', r.text)
+            for proxy in proxies:
+                yield proxy
+
+    @staticmethod
+    def freeproxylistnet():
+        """ freeproxylistnet """
+        target_urls = [
+            'https://free-proxy-list.net/',
+            'https://free-proxy-list.net/anonymous-proxy.html',
+            # 'https://www.sslproxies.org/',
+            'https://free-proxy-list.net/uk-proxy.html',
+            # 'https://www.us-proxy.org/',
+            # 'https://free-proxy-list.net/',
+            # 'https://www.socks-proxy.net/',
+            # 'https://free-proxy-list.net/',
+        ]
+        for url in target_urls:
+            tree = WebRequest().get(url).tree
+            for tr in tree.xpath("//table[@class='table table-striped table-bordered']//tbody//tr")[1:]:
+                ip = "".join(tr.xpath('./td[1]/text()')).strip()
+                port = "".join(tr.xpath('./td[2]/text()')).strip()
+                yield "%s:%s" % (ip, port)
+
 
 if __name__ == '__main__':
     p = ProxyFetcher()
-    for _ in p.freeProxy11():
+    for _ in p.freeproxylistnet():
         print(_)
 
 # http://nntime.com/proxy-list-01.htm
