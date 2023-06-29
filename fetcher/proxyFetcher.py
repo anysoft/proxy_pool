@@ -14,6 +14,8 @@ __author__ = 'JHao'
 
 import re
 import json
+import this
+import time
 from time import sleep
 
 from util.webRequest import WebRequest
@@ -133,12 +135,23 @@ class ProxyFetcher(object):
     @staticmethod
     def freeProxy08():
         """ 小幻代理 """
-        urls = ['https://ip.ihuan.me/address/5Lit5Zu9.html']
-        for url in urls:
+        url = base_url = 'https://ip.ihuan.me/address/5Lit5Zu9.html'
+        page = 0
+        while True:
+            if page > 15:
+                break
+            page += 1
             r = WebRequest().get(url, timeout=10)
             proxies = re.findall(r'>\s*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*?</a></td><td>(\d+)</td>', r.text)
             for proxy in proxies:
                 yield ":".join(proxy)
+            match = re.search(r'<a\s+href="([^"]+)"\s*aria-label="Next">', r.text)
+            if match:
+                time.sleep(1)
+                url = base_url + match.group(1)
+            else:
+                break
+
 
     @staticmethod
     def freeProxy09(page_count=1):
@@ -151,6 +164,7 @@ class ProxyFetcher(object):
                     continue
                 yield ":".join(tr.xpath("./td/text()")[0:2]).strip()
 
+
     @staticmethod
     def freeProxy10():
         """ 89免费代理 """
@@ -161,6 +175,7 @@ class ProxyFetcher(object):
         for proxy in proxies:
             yield ':'.join(proxy)
 
+
     @staticmethod
     def freeProxy11():
         """ 稻壳代理 https://www.docip.net/ """
@@ -170,6 +185,7 @@ class ProxyFetcher(object):
                 yield each['ip']
         except Exception as e:
             print(e)
+
 
     # @staticmethod
     # def wallProxy01():
@@ -251,11 +267,12 @@ class ProxyFetcher(object):
             for proxy in proxies:
                 yield proxy
 
+
     @staticmethod
     def freeproxylistnet():
         """ freeproxylistnet """
         target_urls = [
-            'https://free-proxy-list.net/',
+            # 'https://free-proxy-list.net/',
             'https://free-proxy-list.net/anonymous-proxy.html',
             # 'https://www.sslproxies.org/',
             'https://free-proxy-list.net/uk-proxy.html',
@@ -272,9 +289,75 @@ class ProxyFetcher(object):
                 yield "%s:%s" % (ip, port)
 
 
+    @staticmethod
+    def fatezero():
+        """ fatezero """
+        target_urls = [
+            'http://proxylist.fatezero.org/proxy.list'
+        ]
+        for url in target_urls:
+            text = WebRequest().get(url).response.text
+            lines = text.splitlines()
+            for line in lines:
+                info = json.loads(line)
+                ip = info.get('host')
+                port = info.get('port')
+                yield "%s:%s" % (ip, port)
+
+
+    @staticmethod
+    def geonode():
+        """ geonode """
+        """ socks4/5 """
+        target_urls = 'https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc'
+        for index in range(18):
+            result = WebRequest().get(target_urls.format(index + 1)).response.json()
+            data = result.get('data')
+            for info in data:
+                ip = info.get('ip')
+                port = info.get('port')
+                yield "%s:%s" % (ip, port)
+
+
+    @staticmethod
+    def freeproxylistnet():
+        """ freeproxylistnet """
+        target_urls = [
+            # 'https://free-proxy-list.net/',
+            'https://free-proxy-list.net/anonymous-proxy.html',
+            # 'https://www.sslproxies.org/',
+            'https://free-proxy-list.net/uk-proxy.html',
+            # 'https://www.us-proxy.org/',
+            # 'https://free-proxy-list.net/',
+            # 'https://www.socks-proxy.net/',
+            # 'https://free-proxy-list.net/',
+        ]
+        for url in target_urls:
+            tree = WebRequest().get(url).tree
+            for tr in tree.xpath("//table[@class='table table-striped table-bordered']//tbody//tr")[1:]:
+                ip = "".join(tr.xpath('./td[1]/text()')).strip()
+                port = "".join(tr.xpath('./td[2]/text()')).strip()
+                yield "%s:%s" % (ip, port)
+
+    @staticmethod
+    def xsdaili():
+        """ 小舒代理 https://www.xsdaili.cn/ """
+        url = 'https://www.xsdaili.cn/'
+        text = WebRequest().get(url).response.text
+#<a href="/dayProxy/ip/2242.html">阅读全文</a>
+        links = re.findall(r'<a\s+href="([^"]+)">阅读全文</a>', text)
+        for index in range(3):
+            link = url + links[index]
+            text = WebRequest().get(link).response.text
+            proxies = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)', text)
+            for proxy in proxies:
+                yield proxy
+
+
+
 if __name__ == '__main__':
     p = ProxyFetcher()
-    for _ in p.freeproxylistnet():
+    for _ in p.xsdaili():
         print(_)
 
 # http://nntime.com/proxy-list-01.htm
