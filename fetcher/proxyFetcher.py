@@ -350,7 +350,7 @@ class ProxyFetcher(object):
         """ 小舒代理 https://www.xsdaili.cn/ """
         url = 'https://proxypool.scrape.center/all'
         text = WebRequest().get(url).response.text
-        proxies = text.split(' ')
+        proxies = text.split('\n')
         for proxy in proxies:
             if not proxy or not proxy.__contains__(':'):
                 continue
