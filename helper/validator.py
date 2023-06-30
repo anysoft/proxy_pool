@@ -60,12 +60,21 @@ def httpTimeOutValidator(proxy):
     """ http检测超时 """
 
     proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
-
     try:
-        r = head(conf.httpUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout)
-        return True if r.status_code == 200 else False
+        r = head(conf.httpsUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
+        if r.status_code == 200:
+            if conf.httpsUrlHeader and len(conf.httpsUrlHeader) > 0:
+                for key in conf.httpsUrlHeader.keys():
+                    if not r.headers.get(key) or not r.headers.get(key).startswith(conf.httpsUrlHeader.get(key)):
+                        return False
+                    return True
     except Exception as e:
         return False
+    # try:
+    #     r = head(conf.httpUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout)
+    #     return True if r.status_code == 200 else False
+    # except Exception as e:
+    #     return False
 
 
 @ProxyValidator.addHttpsValidator
@@ -75,7 +84,12 @@ def httpsTimeOutValidator(proxy):
     proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
     try:
         r = head(conf.httpsUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
-        return True if r.status_code == 200 else False
+        if r.status_code == 200:
+            if conf.httpsUrlHeader and len(conf.httpsUrlHeader) > 0:
+                for key in conf.httpsUrlHeader.keys():
+                    if not r.headers.get(key) or not r.headers.get(key).startswith(conf.httpsUrlHeader.get(key)):
+                        return False
+                    return True
     except Exception as e:
         return False
 
@@ -83,11 +97,14 @@ def httpsTimeOutValidator(proxy):
 @ProxyValidator.addHttpValidator
 def customValidatorExample(proxy):
     """自定义validator函数，校验代理是否可用, 返回True/False"""
-    # return True
-    # 使用cloudflare 作为认证，确保server 正常(部分代理地址已经变成了web站导致单纯head status验证不足)
-    proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
-    try:
-        r = head('https://1.1.1.1', headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
-        return True if r.status_code == 200 and r.headers.get('server') == 'cloudflare' else False
-    except Exception as e:
-        return False
+    return True
+    # # 使用cloudflare 作为认证，确保server 正常(部分代理地址已经变成了web站导致单纯head status验证不足)
+    # proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
+    # try:
+    #     r = head('https://1.1.1.1', headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
+    #     return True if r.status_code == 200 and r.headers.get('server') == 'cloudflare' else False
+    # except Exception as e:
+    #     return False
+
+# if __name__ == '__main__':
+#     httpsTimeOutValidator('222.240.52.33:7890')

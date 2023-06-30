@@ -42,7 +42,6 @@ DB_CONN = 'redis://:pwd@127.0.0.1:6379/0'
 # proxy table name
 TABLE_NAME = 'use_proxy'
 
-
 # ###### config the proxy fetch function ######
 PROXY_FETCHER = [
     "freeProxy01",
@@ -65,9 +64,14 @@ PROXY_FETCHER = [
 
 # ############# proxy validator #################
 # 代理验证目标网站
-HTTP_URL = "http://httpbin.org"
+HTTP_URL = "http://www.baidu.com"
+HTTP_URL_HEADER = {"Server": 'bfe'}
 
-HTTPS_URL = "https://www.qq.com"
+# HTTP_URL = "https://1.1.1.1"
+# HTTP_URL_HEADER = {"server": 'cloudflare'}
+
+HTTPS_URL = "https://www.baidu.com"
+HTTPS_URL_HEADER = {"Server": 'bfe'}
 
 # 代理验证时超时时间
 VERIFY_TIMEOUT = 10
