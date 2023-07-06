@@ -13,12 +13,31 @@
 __author__ = 'JHao'
 
 import json
+from enum import Enum
 
+
+class ProxyType(Enum):
+    NONE = 'none'
+    HTTP = 'http'
+    HTTPS = 'https'
+    # SOCKS4 = 'socks4'
+    SOCKS5 = 'socks5'
+
+    def toJSON(self):
+        return self.value
+
+
+class ProxyTypeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ProxyType):
+            return obj.value
+        return super().default(obj)
 
 class Proxy(object):
+    # 定义一个枚举类
 
     def __init__(self, proxy, fail_count=0, region="", anonymous="",
-                 source="", check_count=0, last_status="", last_time="", https=False):
+                 source="", check_count=0, last_status="", last_time="", proxy_type=ProxyType.NONE.value):
         self._proxy = proxy
         self._fail_count = fail_count
         self._region = region
@@ -27,7 +46,7 @@ class Proxy(object):
         self._check_count = check_count
         self._last_status = last_status
         self._last_time = last_time
-        self._https = https
+        self._proxy_type = proxy_type
 
     @classmethod
     def createFromJson(cls, proxy_json):
@@ -40,7 +59,7 @@ class Proxy(object):
                    check_count=_dict.get("check_count", 0),
                    last_status=_dict.get("last_status", ""),
                    last_time=_dict.get("last_time", ""),
-                   https=_dict.get("https", False)
+                   proxy_type=_dict.get("proxy_type", ProxyType.NONE.value)
                    )
 
     @property
@@ -84,15 +103,15 @@ class Proxy(object):
         return self._last_time
 
     @property
-    def https(self):
-        """ 是否支持https """
-        return self._https
+    def proxy_type(self):
+        """ 代理类型  """
+        return self._proxy_type
 
     @property
     def to_dict(self):
         """ 属性字典 """
         return {"proxy": self.proxy,
-                "https": self.https,
+                "proxy_type": self.proxy_type,
                 "fail_count": self.fail_count,
                 "region": self.region,
                 "anonymous": self.anonymous,
@@ -104,7 +123,7 @@ class Proxy(object):
     @property
     def to_json(self):
         """ 属性json格式 """
-        return json.dumps(self.to_dict, ensure_ascii=False)
+        return json.dumps(self.to_dict, ensure_ascii=False, cls=ProxyTypeEncoder)
 
     @fail_count.setter
     def fail_count(self, value):
@@ -122,9 +141,9 @@ class Proxy(object):
     def last_time(self, value):
         self._last_time = value
 
-    @https.setter
-    def https(self, value):
-        self._https = value
+    @proxy_type.setter
+    def proxy_type(self, value):
+        self._proxy_type = value
 
     @region.setter
     def region(self, value):
@@ -134,3 +153,6 @@ class Proxy(object):
         if source_str:
             self._source.append(source_str)
             self._source = list(set(self._source))
+
+
+

@@ -44,22 +44,24 @@ TABLE_NAME = 'use_proxy'
 
 # ###### config the proxy fetch function ######
 PROXY_FETCHER = [
-    "freeProxy01",
-    "freeProxy02",
-    "freeProxy03",
-    "freeProxy04",
-    "freeProxy05",
-    "freeProxy06",
-    "freeProxy07",
+    # "freeProxy01",
+    # "freeProxy02",
+    # "freeProxy03",
+    # "freeProxy04",
+    # "freeProxy05",
+    # "freeProxy06",
+    # "freeProxy07",
     "freeProxy08",
-    "freeProxy09",
-    "freeProxy10",
+    # "freeProxy09",
+    # "freeProxy10",
     "freeProxy11",
-    "freeproxylistnet",
+    # "freeproxylistnet",
     "proxyDBNet",
     "fatezero",
     "xsdaili",
-    "scrapecenter"
+    "scrapecenter",
+    'openproxylist',
+    'proxy_tools'
 ]
 
 # ############# proxy validator #################
@@ -67,14 +69,18 @@ PROXY_FETCHER = [
 HTTP_URL = "http://www.baidu.com"
 HTTP_URL_HEADER = {"Server": 'bfe'}
 
-# HTTP_URL = "https://1.1.1.1"
-# HTTP_URL_HEADER = {"server": 'cloudflare'}
+HTTPS_URL = "https://1.1.1.1/cdn-cgi/trace"
+HTTPS_URL_HEADER = {"Server": 'cloudflare'}
+# get方式获取数据，检测数据内容 json格式key/value body内容包含特定字符串
+HTTPS_URL_BODY = {'json': {"h": '1.1.1.1'}, 'strings': ['h=1.1.1.1', 'uag=', 'visit_scheme=', 'fl=', 'gateway=']}
 
-HTTPS_URL = "https://www.baidu.com"
-HTTPS_URL_HEADER = {"Server": 'bfe'}
+# HTTPS_URL = "https://www.baidu.com"
+# HTTPS_URL_HEADER = {"Server": 'bfe'}
 
 # 代理验证时超时时间
-VERIFY_TIMEOUT = 10
+CONNECT_TIMEOUT = 5
+READ_TIMEOUT = 5
+
 
 # 近PROXY_CHECK_COUNT次校验中允许的最大失败次数,超过则剔除代理
 MAX_FAIL_COUNT = 0
@@ -84,6 +90,10 @@ MAX_FAIL_COUNT = 0
 
 # proxyCheck时代理数量少于POOL_SIZE_MIN触发抓取
 POOL_SIZE_MIN = 20
+# 代理拉取间隔
+PROXY_FETCH_INTERVAL = 60
+# 代理 检查间隔
+PROXY_CHECK_INTERVAL = 5
 
 # ############# proxy attributes #################
 # 是否启用代理地域属性

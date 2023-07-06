@@ -13,6 +13,10 @@
 """
 __author__ = 'JHao'
 
+import threading
+
+from apscheduler.executors.pool import ThreadPoolExecutor
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
@@ -34,25 +38,39 @@ def __runProxyFetch():
     Checker("raw", proxy_queue)
 
 
-def __runProxyCheck():
+def __runProxyCheck_raw():
     proxy_handler = ProxyHandler()
-    proxy_queue = Queue()
     if proxy_handler.db.getCount().get("total", 0) < proxy_handler.conf.poolSizeMin:
         __runProxyFetch()
+
+def __runProxyCheck_use():
+    proxy_handler = ProxyHandler()
+    proxy_queue = Queue()
     for proxy in proxy_handler.getAll():
         proxy_queue.put(proxy)
     Checker("use", proxy_queue)
 
 
 def runScheduler():
-    __runProxyFetch()
+    config_handler = ConfigHandler()
+    timezone = config_handler.timezone
+    proxy_fetch_interval = config_handler.proxyFetchInterval
+    proxy_check_interval = config_handler.proxyCheckInterval
 
-    timezone = ConfigHandler().timezone
     scheduler_log = LogHandler("scheduler")
-    scheduler = BlockingScheduler(logger=scheduler_log, timezone=timezone)
 
-    scheduler.add_job(__runProxyFetch, 'interval', minutes=4, id="proxy_fetch", name="proxy采集")
-    scheduler.add_job(__runProxyCheck, 'interval', minutes=2, id="proxy_check", name="proxy检查")
+    __runProxyCheck_use()
+    scheduler_check = BlockingScheduler(logger=scheduler_log, timezone=timezone)
+    scheduler_check.add_job(__runProxyCheck_use, 'interval', minutes=proxy_check_interval, id="proxy_check_use", name="proxy检查_use")
+    scheduler_check.add_executor(ThreadPoolExecutor(max_workers=5))
+
+    scheduler_thread = threading.Thread(target=scheduler_check.start)
+    scheduler_thread.start()
+
+    __runProxyFetch()
+    scheduler_fetch = BlockingScheduler(logger=scheduler_log, timezone=timezone)
+    scheduler_fetch.add_job(__runProxyFetch, 'interval', minutes=proxy_fetch_interval, id="proxy_fetch", name="proxy采集")
+    scheduler_fetch.add_job(__runProxyCheck_raw, 'interval', minutes=proxy_check_interval, id="proxy_check_raw", name="proxy检查_raw")
     executors = {
         'default': {'type': 'threadpool', 'max_workers': 20},
         'processpool': ProcessPoolExecutor(max_workers=5)
@@ -61,11 +79,12 @@ def runScheduler():
         'coalesce': False,
         'max_instances': 10
     }
-
-    scheduler.configure(executors=executors, job_defaults=job_defaults, timezone=timezone)
-
-    scheduler.start()
+    scheduler_fetch.configure(executors=executors, job_defaults=job_defaults, timezone=timezone)
+    scheduler_fetch.start()
 
 
-if __name__ == '__main__':
-    runScheduler()
+
+
+
+# if __name__ == '__main__':
+#     runScheduler()

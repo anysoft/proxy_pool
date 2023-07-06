@@ -262,25 +262,7 @@ class ProxyFetcher(object):
             for proxy in proxies:
                 yield proxy
 
-    @staticmethod
-    def freeproxylistnet():
-        """ freeproxylistnet """
-        target_urls = [
-            # 'https://free-proxy-list.net/',
-            'https://free-proxy-list.net/anonymous-proxy.html',
-            # 'https://www.sslproxies.org/',
-            'https://free-proxy-list.net/uk-proxy.html',
-            # 'https://www.us-proxy.org/',
-            # 'https://free-proxy-list.net/',
-            # 'https://www.socks-proxy.net/',
-            # 'https://free-proxy-list.net/',
-        ]
-        for url in target_urls:
-            tree = WebRequest().get(url).tree
-            for tr in tree.xpath("//table[@class='table table-striped table-bordered']//tbody//tr")[1:]:
-                ip = "".join(tr.xpath('./td[1]/text()')).strip()
-                port = "".join(tr.xpath('./td[2]/text()')).strip()
-                yield "%s:%s" % (ip, port)
+
 
     @staticmethod
     def fatezero():
@@ -311,11 +293,22 @@ class ProxyFetcher(object):
                 yield "%s:%s" % (ip, port)
 
     @staticmethod
+    def proxy_tools():
+        """ proxy-tools """
+        # target_urls = 'https://cn.proxy-tools.com/proxy/https?page={}'
+        target_urls = 'https://cn.proxy-tools.com/proxy/cn?page={}'
+        for index in range(3):
+            tree = WebRequest().get(target_urls.format(index+1)).tree
+            for tr in tree.xpath("//table[@class='table table-striped table-bordered']//tbody//tr")[1:]:
+                ip = "".join(tr.xpath('./td[1]/text()')).strip()
+                port = "".join(tr.xpath('./td[2]/text()')).strip()
+                yield "%s:%s" % (ip, port)
+    @staticmethod
     def freeproxylistnet():
         """ freeproxylistnet """
         target_urls = [
             # 'https://free-proxy-list.net/',
-            'https://free-proxy-list.net/anonymous-proxy.html',
+            # 'https://free-proxy-list.net/anonymous-proxy.html',
             # 'https://www.sslproxies.org/',
             'https://free-proxy-list.net/uk-proxy.html',
             # 'https://www.us-proxy.org/',
@@ -325,7 +318,7 @@ class ProxyFetcher(object):
         ]
         for url in target_urls:
             tree = WebRequest().get(url).tree
-            for tr in tree.xpath("//table[@class='table table-striped table-bordered']//tbody//tr")[1:]:
+            for tr in tree.xpath("//table[@class='table table-sm table-responsive-md table-hover']//tbody//tr")[1:]:
                 ip = "".join(tr.xpath('./td[1]/text()')).strip()
                 port = "".join(tr.xpath('./td[2]/text()')).strip()
                 yield "%s:%s" % (ip, port)
@@ -346,8 +339,18 @@ class ProxyFetcher(object):
 
     @staticmethod
     def scrapecenter():
-        """ 小舒代理 https://www.xsdaili.cn/ """
+        """  https://www.xsdaili.cn/ """
         url = 'https://proxypool.scrape.center/all'
+        text = WebRequest().get(url).response.text
+        proxies = text.split('\n')
+        for proxy in proxies:
+            if not proxy or not proxy.__contains__(':'):
+                continue
+            yield proxy
+    @staticmethod
+    def openproxylist():
+        """  https://openproxylist.xyz/http.txt """
+        url = 'https://openproxylist.xyz/http.txt'
         text = WebRequest().get(url).response.text
         proxies = text.split('\n')
         for proxy in proxies:
@@ -356,12 +359,12 @@ class ProxyFetcher(object):
             yield proxy
 
 
-if __name__ == '__main__':
-    p = ProxyFetcher()
+# if __name__ == '__main__':
+    # p = ProxyFetcher()
     # for _ in p.freeProxy06():
     # for _ in p.xsdaili():
-    # for _ in p.scrapecenter():
-    for _ in p.freeproxylistnet():
-        print(_)
+    # for _ in p.openproxylist():
+    # for _ in p.freeproxylistnet():
+        # print(_)
 
 # http://nntime.com/proxy-list-01.htm
