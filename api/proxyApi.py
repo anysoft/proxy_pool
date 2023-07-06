@@ -20,7 +20,9 @@ import platform
 from werkzeug.wrappers import Response
 from flask import Flask, jsonify, request
 
+from helper.check import Checker
 from util.six import iteritems
+from util.six import Queue
 from helper.proxy import Proxy
 from handler.proxyHandler import ProxyHandler
 from handler.configHandler import ConfigHandler
@@ -93,14 +95,24 @@ def delete():
 @app.route('/count/')
 def getCount():
     proxies = proxy_handler.getAll()
-    http_type_dict = {}
+    proxy_type_dict = {}
     source_dict = {}
     for proxy in proxies:
-        http_type = 'https' if proxy.https else 'http'
-        http_type_dict[http_type] = http_type_dict.get(http_type, 0) + 1
+        proxy_type_dict[proxy.proxy_type] = proxy_type_dict.get(proxy.proxy_type, 0) + 1
         for source in proxy.source.split('/'):
             source_dict[source] = source_dict.get(source, 0) + 1
-    return {"http_type": http_type_dict, "source": source_dict, "count": len(proxies)}
+    return {"proxy_type": proxy_type_dict, "source": source_dict, "count": len(proxies)}
+
+
+@app.route('/check/')
+def checkUseProxy():
+    proxy_queue = Queue()
+    origin = proxy_handler.getAll()
+    for proxy in origin:
+        proxy_queue.put(proxy)
+    Checker("use", proxy_queue)
+    current = proxy_handler.getAll()
+    return {"origin": len(origin), "current": len(current)}
 
 
 def runFlask():
@@ -134,5 +146,5 @@ def runFlask():
         StandaloneApplication(app, _options).run()
 
 
-if __name__ == '__main__':
-    runFlask()
+# if __name__ == '__main__':
+#     runFlask()

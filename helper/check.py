@@ -14,6 +14,10 @@
 """
 __author__ = 'JHao'
 
+from requests.exceptions import ProxyError, ConnectTimeout
+from urllib3.exceptions import ConnectTimeoutError
+
+from helper.proxy import Proxy, ProxyType
 from util.six import Empty
 from threading import Thread
 from datetime import datetime
@@ -39,20 +43,43 @@ class DoValidator(object):
         Returns:
             Proxy Object
         """
-        http_r = cls.httpValidator(proxy)
-        https_r = False if not http_r else cls.httpsValidator(proxy)
+        # default value
+        try:
+            proxy.last_status = False
+            # raw check
+            if proxy.proxy_type == ProxyType.NONE.value:
+                if cls.httpValidator(proxy):
+                    proxy.proxy_type = ProxyType.HTTP.value
+                elif cls.httpsValidator(proxy):
+                    proxy.proxy_type = ProxyType.HTTPS.value
+                elif cls.socks5Validator(proxy):
+                    proxy.proxy_type = ProxyType.SOCKS5.value
+                # check success
+                if not proxy.proxy_type == ProxyType.NONE.value:
+                    proxy.last_status = True
+            # use check
+            elif proxy.proxy_type == ProxyType.HTTP.value:
+                proxy.last_status = True if cls.httpValidator(proxy) else False
+            elif proxy.proxy_type == ProxyType.HTTPS.value:
+                proxy.last_status = True if cls.httpsValidator(proxy) else False
+            elif proxy.proxy_type == ProxyType.SOCKS5.value:
+                proxy.last_status = True if cls.socks5Validator(proxy) else False
 
-        proxy.check_count += 1
-        proxy.last_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        proxy.last_status = True if http_r else False
-        if http_r:
-            if proxy.fail_count > 0:
-                proxy.fail_count -= 1
-            proxy.https = True if https_r else False
-            if work_type == "raw":
-                proxy.region = cls.regionGetter(proxy) if cls.conf.proxyRegion else ""
-        else:
+            proxy.check_count += 1
+            proxy.last_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if proxy.proxy_type and not proxy.proxy_type == ProxyType.NONE.value and proxy.last_status:
+                if proxy.fail_count > 0:
+                    proxy.fail_count -= 1
+                if work_type == "raw":
+                    proxy.region = cls.regionGetter(proxy) if cls.conf.proxyRegion else ""
+            else:
+                proxy.fail_count += 1
+        except (ProxyError, ConnectTimeout, ConnectTimeoutError) as e:
             proxy.fail_count += 1
+            proxy.last_status = False
+        except Exception as e:
+            proxy.fail_count += 1
+            proxy.last_status = False
         return proxy
 
     @classmethod
@@ -65,6 +92,13 @@ class DoValidator(object):
     @classmethod
     def httpsValidator(cls, proxy):
         for func in ProxyValidator.https_validator:
+            if not func(proxy.proxy):
+                return False
+        return True
+
+    @classmethod
+    def socks5Validator(cls, proxy):
+        for func in ProxyValidator.socks5_validator:
             if not func(proxy.proxy):
                 return False
         return True

@@ -60,10 +60,17 @@ class ConfigHandler(withMetaclass(Singleton)):
     @LazyProperty
     def httpsUrlHeader(self):
         return os.getenv("HTTPS_URL_HEADER", setting.HTTPS_URL_HEADER)
+    @LazyProperty
+    def httpsUrlBody(self):
+        return os.getenv("HTTPS_URL_BODY", setting.HTTPS_URL_BODY)
 
     @LazyProperty
-    def verifyTimeout(self):
-        return int(os.getenv("VERIFY_TIMEOUT", setting.VERIFY_TIMEOUT))
+    def connectTimeout(self):
+        return int(os.getenv("CONNECT_TIMEOUT", setting.CONNECT_TIMEOUT))
+
+    @LazyProperty
+    def readTimeout(self):
+        return int(os.getenv("READ_TIMEOUT", setting.READ_TIMEOUT))
 
     # @LazyProperty
     # def proxyCheckCount(self):
@@ -80,6 +87,12 @@ class ConfigHandler(withMetaclass(Singleton)):
     @LazyProperty
     def poolSizeMin(self):
         return int(os.getenv("POOL_SIZE_MIN", setting.POOL_SIZE_MIN))
+    @LazyProperty
+    def proxyFetchInterval(self):
+        return int(os.getenv("PROXY_FETCH_INTERVAL", setting.PROXY_FETCH_INTERVAL))
+    @LazyProperty
+    def proxyCheckInterval(self):
+        return int(os.getenv("PROXY_CHECK_INTERVAL", setting.PROXY_CHECK_INTERVAL))
 
     @LazyProperty
     def proxyRegion(self):
