@@ -61,6 +61,14 @@ class SsdbClient(object):
             proxy = choice(proxies) if proxies else None
             return self.__conn.hget(self.name, proxy) if proxy else None
 
+    def getByProxy(self, proxy_str):
+        """
+        返回指定代理的完整属性
+        :param proxy_str:
+        :return:
+        """
+        return self.__conn.hget(self.name, proxy_str)
+
     def put(self, proxy_obj):
         """
         将代理放入hash

@@ -2,3 +2,8 @@
 docs/_build
 *.pyc
 *.log
+.DS_Store
+.venv/
+log/
+data/geoip/
+dump.rdb

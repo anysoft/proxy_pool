@@ -89,6 +89,9 @@ class DbClient(withMetaclass(Singleton)):
     def get(self, https, **kwargs):
         return self.client.get(https, **kwargs)
 
+    def getByProxy(self, proxy_str, **kwargs):
+        return self.client.getByProxy(proxy_str, **kwargs)
+
     def put(self, key, **kwargs):
         return self.client.put(key, **kwargs)
 

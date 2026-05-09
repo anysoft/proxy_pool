@@ -47,14 +47,15 @@ def __runProxyCheck():
 def runScheduler():
     __runProxyFetch()
 
-    timezone = ConfigHandler().timezone
+    conf = ConfigHandler()
+    timezone = conf.timezone
     scheduler_log = LogHandler("scheduler")
     scheduler = BlockingScheduler(logger=scheduler_log, timezone=timezone)
 
     scheduler.add_job(__runProxyFetch, 'interval', minutes=4, id="proxy_fetch", name="proxy采集")
     scheduler.add_job(__runProxyCheck, 'interval', minutes=2, id="proxy_check", name="proxy检查")
     executors = {
-        'default': {'type': 'threadpool', 'max_workers': 20},
+        'default': {'type': 'threadpool', 'max_workers': conf.fetchSchedulerWorkers},
         'processpool': ProcessPoolExecutor(max_workers=5)
     }
     job_defaults = {

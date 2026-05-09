@@ -74,6 +74,14 @@ class ConfigHandler(withMetaclass(Singleton)):
         return int(os.getenv("POOL_SIZE_MIN", setting.POOL_SIZE_MIN))
 
     @LazyProperty
+    def fetchSchedulerWorkers(self):
+        return int(os.getenv("FETCH_SCHEDULER_WORKERS", setting.FETCH_SCHEDULER_WORKERS))
+
+    @LazyProperty
+    def proxyCheckerThreadCount(self):
+        return int(os.getenv("PROXY_CHECKER_THREAD_COUNT", setting.PROXY_CHECKER_THREAD_COUNT))
+
+    @LazyProperty
     def proxyRegion(self):
         return bool(os.getenv("PROXY_REGION", setting.PROXY_REGION))
 
@@ -81,3 +89,53 @@ class ConfigHandler(withMetaclass(Singleton)):
     def timezone(self):
         return os.getenv("TIMEZONE", setting.TIMEZONE)
 
+    @LazyProperty
+    def enableIpIntel(self):
+        return str(os.getenv("ENABLE_IP_INTEL", setting.ENABLE_IP_INTEL)).lower() in ("true", "1", "yes")
+
+    @LazyProperty
+    def enableOnlineIpLookup(self):
+        return str(os.getenv("ENABLE_ONLINE_IP_LOOKUP", setting.ENABLE_ONLINE_IP_LOOKUP)).lower() in ("true", "1", "yes")
+
+    @LazyProperty
+    def geoipCountryDb(self):
+        return os.getenv("GEOIP_COUNTRY_DB", setting.GEOIP_COUNTRY_DB)
+
+    @LazyProperty
+    def geoipCityDb(self):
+        return os.getenv("GEOIP_CITY_DB", setting.GEOIP_CITY_DB)
+
+    @LazyProperty
+    def geoipAsnDb(self):
+        return os.getenv("GEOIP_ASN_DB", setting.GEOIP_ASN_DB)
+
+    @LazyProperty
+    def ipIntelCacheSize(self):
+        return int(os.getenv("IP_INTEL_CACHE_SIZE", setting.IP_INTEL_CACHE_SIZE))
+
+    @LazyProperty
+    def enableRiskRules(self):
+        return str(os.getenv("ENABLE_RISK_RULES", setting.ENABLE_RISK_RULES)).lower() in ("true", "1", "yes")
+
+    @property
+    def datacenterKeywords(self):
+        reload_six(setting)
+        return setting.DATACENTER_KEYWORDS
+
+    @property
+    def mobileKeywords(self):
+        reload_six(setting)
+        return setting.MOBILE_KEYWORDS
+
+    @property
+    def residentialKeywords(self):
+        reload_six(setting)
+        return setting.RESIDENTIAL_KEYWORDS
+
+    @LazyProperty
+    def ipinfoToken(self):
+        return os.getenv("IPINFO_TOKEN", setting.IPINFO_TOKEN)
+
+    @LazyProperty
+    def ipqualityscoreToken(self):
+        return os.getenv("IPQUALITYSCORE_TOKEN", setting.IPQUALITYSCORE_TOKEN)

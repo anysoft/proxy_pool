@@ -87,20 +87,66 @@ PROXY_FETCHER = [
     "freeProxy02",
     # ....
 ]
+
+
+# 配置离线 IP 画像，可不配置数据库文件，项目仍会正常运行
+
+ENABLE_IP_INTEL = True
+ENABLE_ONLINE_IP_LOOKUP = False
+GEOIP_COUNTRY_DB = "./data/geoip/GeoLite2-Country.mmdb"
+GEOIP_CITY_DB = "./data/geoip/GeoLite2-City.mmdb"
+GEOIP_ASN_DB = "./data/geoip/GeoLite2-ASN.mmdb"
+IP_INTEL_CACHE_SIZE = 10000
+ENABLE_RISK_RULES = True
+
+# 并发配置。多个代理源并行抓取，每个代理源内部仍单线程抓取。
+FETCH_SCHEDULER_WORKERS = 20
+PROXY_CHECKER_THREAD_COUNT = 50
 ```
 
 #### 启动项目:
 
 ```bash
-# 如果已经具备运行条件, 可用通过proxyPool.py启动。
-# 程序分为: schedule 调度程序 和 server Api服务
+# 本地首次运行建议创建虚拟环境并安装依赖
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
 
-# 启动调度程序
-python proxyPool.py schedule
+# Redis 按 setting.py 默认配置需要监听 127.0.0.1:6379，密码为 pwd。
+# macOS/Homebrew 示例:
+/opt/homebrew/opt/redis/bin/redis-server --daemonize yes --bind 127.0.0.1 --port 6379 --requirepass pwd
 
-# 启动webApi服务
-python proxyPool.py server
+# 一键启动 API + 调度器。start.sh 会优先使用 .venv/bin/python。
+./start.sh
 
+# 启动后浏览器打开:
+# http://127.0.0.1:5010/apis/
+# http://127.0.0.1:5010/count/
+```
+
+如果想分别启动两个进程，使用:
+
+```bash
+.venv/bin/python proxyPool.py server
+.venv/bin/python proxyPool.py schedule
+```
+
+如果想放到后台运行，可以使用 `screen`:
+
+```bash
+PROJECT_DIR="$(pwd)"
+screen -dmS proxy_pool_server bash -lc "cd '$PROJECT_DIR' && .venv/bin/python proxyPool.py server"
+screen -dmS proxy_pool_schedule bash -lc "cd '$PROJECT_DIR' && .venv/bin/python proxyPool.py schedule"
+
+# 查看后台会话
+screen -ls
+
+# 停止后台会话
+screen -S proxy_pool_server -X quit
+screen -S proxy_pool_schedule -X quit
+
+# 查看端口和进程
+lsof -nP -iTCP:5010 -sTCP:LISTEN
+pgrep -fl 'proxyPool.py|redis-server'
 ```
 
 ### Docker Image
@@ -131,6 +177,63 @@ docker-compose up -d
 | /all | GET | 获取所有代理 |可选参数: `?type=https` 过滤支持https的代理|
 | /count | GET | 查看代理数量 |None|
 | /delete | GET | 删除代理  |`?proxy=host:ip`|
+| /stats/asns | GET | 查看 ASN 聚合 |None|
+| /stats/countries | GET | 查看国家/地区聚合 |None|
+| /stats/isps | GET | 查看 ISP 聚合 |None|
+| /stats/overview | GET | 查看代理池画像总览 |None|
+| /stats/geoip | GET | 查看本地 GeoIP 数据库状态 |None|
+| /admin/enrich | GET | 重新补充 Redis 中已有代理的 IP 画像 |可选参数: `?force=true` 强制刷新所有代理|
+| /apis | GET | 浏览器友好的 API 列表页 |None|
+
+代理对象会在原有字段基础上返回 `ip`、`port`、`country_code`、`country_name`、`region_name`、`city_name`、`asn`、`asn_org`、`isp`、`usage_type`、`risk_score`、`risk_level`、`is_datacenter`、`is_residential`、`is_mobile`、`is_proxy`、`is_vpn`、`geo_source`、`risk_source`、`geo_updated_at` 等画像字段。旧 Redis 数据可以继续读取，缺失画像字段会以 `None`、`False`、`unknown` 或 `0` 返回。
+
+筛选参数支持组合使用，字符串默认大小写不敏感。`asn` 兼容 `4134` 和 `AS4134`，布尔参数兼容 `true/false/1/0/yes/no`：
+
+```bash
+curl "http://127.0.0.1:5010/get?country_code=CN&usage_type=residential&max_risk_score=50"
+curl "http://127.0.0.1:5010/all?country_code=JP&is_datacenter=false"
+curl "http://127.0.0.1:5010/get?asn=AS4134&anonymous=anonymous"
+curl "http://127.0.0.1:5010/stats/asns"
+curl "http://127.0.0.1:5010/stats/countries"
+curl "http://127.0.0.1:5010/stats/isps"
+```
+
+可筛选字段：
+
+```text
+type=http|https
+country_code=CN
+country=China
+asn=4134 或 AS4134
+asn_org=CHINANET
+isp=China Telecom
+usage_type=residential|mobile|datacenter|business|unknown
+risk_level=low|medium|high|unknown
+max_risk_score=50
+is_datacenter=true|false
+is_residential=true|false
+is_mobile=true|false
+is_proxy=true|false
+is_vpn=true|false
+source=xxx
+anonymous=anonymous|elite|transparent
+```
+
+#### 离线 IP 画像数据库
+
+本项目优先使用本地离线数据库，不默认依赖在线 API。推荐使用 MaxMind GeoLite2 免费库：
+
+1. 注册并登录 [MaxMind GeoLite2](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data)。
+2. 下载 `GeoLite2-Country.mmdb`、`GeoLite2-City.mmdb`、`GeoLite2-ASN.mmdb`。
+3. 放置到项目目录：
+
+```text
+data/geoip/GeoLite2-Country.mmdb
+data/geoip/GeoLite2-City.mmdb
+data/geoip/GeoLite2-ASN.mmdb
+```
+
+没有这些文件时，代理池仍可运行，画像字段会返回 `unknown` 或空值。只接入 MaxMind 免费库时，`country_code/country_name` 与 `asn/asn_org` 通常较可靠；`isp` 在没有 ISP 数据库时会用 `asn_org` 兜底，并通过 `geo_source` 标记 `isp_fallback_asn_org`；`usage_type/risk_score/risk_level` 仅来自离线关键词规则估算。住宅 IP 不会按国家判断，不确定时保持 `unknown`。
 
 
 * 爬虫使用
