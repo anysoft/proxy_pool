@@ -30,7 +30,8 @@ else:
     from urlparse import urlparse
 
 if PY3:
-    from imp import reload as reload_six
+    #from imp import reload as reload_six
+    from importlib import reload as reload_six
 else:
     reload_six = reload
 
